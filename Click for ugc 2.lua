@@ -4,11 +4,17 @@ if not game:IsLoaded() then
 end
 
 function antiafk() 
-local VirtualUser = game:GetService("VirtualUser")
-game:GetService("Players").LocalPlayer.Idled:Connect(function()
-        VirtualUser:CaptureController()
-        VirtualUser:ClickButton2(Vector2.new())
-    end)
+local cloneref = cloneref or function(obj) return obj end
+local newcclosure = newcclosure or function(func) return func end
+
+local VirtualUser = cloneref(game:GetService("VirtualUser"))
+local Players = cloneref(game:GetService("Players"))
+local LocalPlayer = cloneref(Players.LocalPlayer)
+
+LocalPlayer.Idled:Connect(newcclosure(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)))
 print("AntiAfk loaded") 
 end
 
