@@ -105,9 +105,10 @@ pcall(function()
         --// Function to use all available codes by firing the "UseCode" remote event for each code
         local function useCodes()
             local success, err = pcall(function()
-                for _, code in ipairs(Players.LocalPlayer:WaitForChild("Codes"):GetChildren()) do
-                    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("UseCode"):FireServer(code.Name)
-                end
+                for _, code in ipairs(game:GetService("Players").LocalPlayer:WaitForChild("Codes"):GetChildren()) do
+        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("UseCode"):FireServer(code.Name)
+wait(0.2) 
+    end
                 print("Redeem All Code Auto Update Loaded!")
             end)
             if not success then warn("Code Redemption Error:", err) end
