@@ -23,7 +23,7 @@ pcall(function()
         local GuiService = secureGetService("GuiService")             --// To monitor GUI errors
         local ReplicatedStorage = secureGetService("ReplicatedStorage") --// For accessing shared objects
 local RunService = game:GetService("RunService")
-local VirtualUser  = game:GetService("VirtualUser")
+local VirtualUser  = game:GetService("VirtualUser ")
         --// Anti-AFK function to prevent the player from being kicked for idling
         
 
