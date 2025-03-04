@@ -27,13 +27,12 @@ pcall(function()
         
 
 local function antiafk()
-            Players.LocalPlayer.Idled:Connect(function()
+        game:GetService("RunService").RenderStepped:Connect(function()
         -- Wait a random amount (simulate human reaction)
         local delayTime = math.random(5, 15)
         task.wait(delayTime)
         VirtualUser:CaptureController()
         VirtualUser:ClickButton2(Vector2.new(math.random(0, 100), math.random(0, 100)))
-        print("Anti-AFK triggered after " .. delayTime .. " seconds of idle.")
     end)
    end
         --// Function to send notifications to the player
