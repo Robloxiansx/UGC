@@ -1,189 +1,188 @@
-if _G.Honey_Valley then return end
-_G.Honey_Valley = true
---// Game Check
-local supportedGameId = 90070078747190
+pcall(function()
+    if not game:IsLoaded() then
+        game.Loaded:Wait()
+    end
 
-if game.PlaceId ~= supportedGameId then
-    game:GetService("StarterGui"):SetCore("SendNotification", {
-        Title = "Game Not Supported",
-        Text = "Sorry, this script only works in the supported game.",
-        Duration = 5
-    })
-    return
-end
+    --// Services
+    local Players = cloneref(game:GetService("Players"))
+    local StarterGui = cloneref(game:GetService("StarterGui"))
+    local TeleportService = cloneref(game:GetService("TeleportService"))
+    local ReplicatedStorage = cloneref(game:GetService("ReplicatedStorage"))
+    local UIS = cloneref(game:GetService("UserInputService"))
+    local TweenService = cloneref(game:GetService("TweenService"))
 
---// Services
-local Players = cloneref(game:GetService("Players"))
-local StarterGui = cloneref(game:GetService("StarterGui"))
-local TeleportService = cloneref(game:GetService("TeleportService"))
-local GuiService = cloneref(game:GetService("GuiService"))
-local ReplicatedStorage = cloneref(game:GetService("ReplicatedStorage"))
-local UserInputService = cloneref(game:GetService("UserInputService"))
-local HttpService = cloneref(game:GetService("HttpService"))
+    --// File system for saving toggle state
+    local FolderName = "AlwiHub_Settings"
+    if not isfolder(FolderName) then
+        makefolder(FolderName)
+    end
 
-local LocalPlayer = Players.LocalPlayer
+    local function saveState(fileName, state)
+        writefile(FolderName .. "/" .. fileName, tostring(state))
+    end
 
---// Settings Folder & File
-local FolderName = "AlwiHub_Settings"
-if not isfolder(FolderName) then
-    makefolder(FolderName)
-end
-
-local saveFile = FolderName .. "/Settings.json"
-
-local function saveSettings()
-    local settings = {
-        AutoClick = getgenv().AutoClick,
-        AutoReconnect = getgenv().AutoReconnect
-    }
-    writefile(saveFile, HttpService:JSONEncode(settings))
-end
-
-local function loadSettings()
-    if isfile(saveFile) then
-        local data = readfile(saveFile)
-        local success, settings = pcall(function() return HttpService:JSONDecode(data) end)
-        if success and type(settings) == "table" then
-            getgenv().AutoClick = settings.AutoClick or false
-            getgenv().AutoReconnect = settings.AutoReconnect or false
+    local function loadState(fileName)
+        if isfile(FolderName .. "/" .. fileName) then
+            return readfile(FolderName .. "/" .. fileName) == "true"
         end
+        return false
     end
-end
 
---// Load settings on script start
-loadSettings()
+    --// Load saved toggle states
+    getgenv().AutoClick = loadState("AutoClick.txt")
+    getgenv().AutoReconnect = loadState("AutoReconnect.txt")
 
---// Function to send notifications
-local function sendNotification(title, message)
-    StarterGui:SetCore("SendNotification", {
-        Title = title,
-        Text = message,
-        Duration = 5
-    })
-end
+    --// Create GUI
+    local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
 
---// GUI Creation
-local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.ResetOnSpawn = false
+    local Frame = Instance.new("Frame", ScreenGui)
+    Frame.Size = UDim2.new(0, 240, 0, 150)
+    Frame.Position = UDim2.new(0.5, -120, 0.4, -75)
+    Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Frame.BorderSizePixel = 0
+    Frame.Active = true
+    Frame.Draggable = true
 
-local Frame = Instance.new("Frame", ScreenGui)
-Frame.Size = UDim2.new(0, 250, 0, 180)
-Frame.Position = UDim2.new(0.5, -125, 0.5, -90)
-Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-Frame.BorderSizePixel = 0
+    local UICorner = Instance.new("UICorner", Frame)
+    UICorner.CornerRadius = UDim.new(0, 10)
 
-local UICorner = Instance.new("UICorner", Frame)
-UICorner.CornerRadius = UDim.new(0, 10)
+    --// Title Label
+    local Title = Instance.new("TextLabel", Frame)
+    Title.Size = UDim2.new(1, 0, 0, 30)
+    Title.Position = UDim2.new(0, 0, 0, 0)
+    Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Title.Text = "Alwi Hub | Click For UGC 2"
+    Title.TextSize = 16
+    Title.Font = Enum.Font.SourceSansBold
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-local Title = Instance.new("TextLabel", Frame)
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Title.Text = "Alwi Hub | Click For UGC 2"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 16
+    local UICornerTitle = Instance.new("UICorner", Title)
+    UICornerTitle.CornerRadius = UDim.new(0, 10)
 
-local CloseButton = Instance.new("TextButton", Frame)
-CloseButton.Size = UDim2.new(0, 30, 0, 30)
-CloseButton.Position = UDim2.new(1, -35, 0, 5)
-CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
-CloseButton.Text = "X"
-CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-CloseButton.Font = Enum.Font.SourceSansBold
-CloseButton.TextSize = 16
+    local function createButton(text, position)
+        local Button = Instance.new("TextButton", Frame)
+        Button.Size = UDim2.new(0, 200, 0, 40)
+        Button.Position = position
+        Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        Button.Text = text
+        Button.TextSize = 18
+        Button.Font = Enum.Font.SourceSansBold
+        Button.TextColor3 = Color3.fromRGB(255, 255, 255)
 
-local AutoClickButton = Instance.new("TextButton", Frame)
-AutoClickButton.Size = UDim2.new(0.9, 0, 0, 40)
-AutoClickButton.Position = UDim2.new(0.05, 0, 0.3, 0)
-AutoClickButton.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
-AutoClickButton.Text = "Enable Auto Click"
-AutoClickButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-AutoClickButton.Font = Enum.Font.SourceSansBold
-AutoClickButton.TextSize = 16
+        local UICornerBtn = Instance.new("UICorner", Button)
+        UICornerBtn.CornerRadius = UDim.new(0, 10)
 
-local AutoReconnectButton = Instance.new("TextButton", Frame)
-AutoReconnectButton.Size = UDim2.new(0.9, 0, 0, 40)
-AutoReconnectButton.Position = UDim2.new(0.05, 0, 0.6, 0)
-AutoReconnectButton.BackgroundColor3 = Color3.fromRGB(50, 50, 150)
-AutoReconnectButton.Text = "Enable Auto Reconnect"
-AutoReconnectButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-AutoReconnectButton.Font = Enum.Font.SourceSansBold
-AutoReconnectButton.TextSize = 16
-
---// Toggle System
-AutoClickButton.MouseButton1Click:Connect(function()
-    getgenv().AutoClick = not getgenv().AutoClick
-    AutoClickButton.Text = getgenv().AutoClick and "Disable Auto Click" or "Enable Auto Click"
-    AutoClickButton.BackgroundColor3 = getgenv().AutoClick and Color3.fromRGB(150, 50, 50) or Color3.fromRGB(50, 150, 50)
-    saveSettings()
-    
-    if getgenv().AutoClick then
-        task.spawn(autoClick)
-    end
-end)
-
-AutoReconnectButton.MouseButton1Click:Connect(function()
-    getgenv().AutoReconnect = not getgenv().AutoReconnect
-    AutoReconnectButton.Text = getgenv().AutoReconnect and "Disable Auto Reconnect" or "Enable Auto Reconnect"
-    AutoReconnectButton.BackgroundColor3 = getgenv().AutoReconnect and Color3.fromRGB(150, 50, 50) or Color3.fromRGB(50, 50, 150)
-    saveSettings()
-
-    if getgenv().AutoReconnect then
-        task.spawn(autoReconnect)
-    end
-end)
-
---// Auto Click Function
-local function autoClick()
-    while getgenv().AutoClick do
-        ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Click"):FireServer()
-        wait(0.1)
-    end
-end
-
---// Auto Reconnect Function
-local function autoReconnect()
-    if getgenv().AutoReconnect then
-        sendNotification("Auto Reconnect", "Monitoring connectivity...")
-
-        GuiService.ErrorMessageChanged:Connect(function()
-            sendNotification("Error Detected", "Attempting to rejoin...")
-            wait(5)
-            TeleportService:Teleport(game.PlaceId)
+        -- Smooth Button Effects
+        Button.MouseEnter:Connect(function()
+            TweenService:Create(Button, TweenInfo.new(0.2), {BackgroundTransparency = 0.2}):Play()
+        end)
+        Button.MouseLeave:Connect(function()
+            TweenService:Create(Button, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
+        end)
+        Button.MouseButton1Down:Connect(function()
+            TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 190, 0, 35)}):Play()
+        end)
+        Button.MouseButton1Up:Connect(function()
+            TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 200, 0, 40)}):Play()
         end)
 
-        LocalPlayer.OnTeleport:Connect(function(State)
-            if State == Enum.TeleportState.Failed then
-                sendNotification("Teleport Failed", "Retrying teleport...")
+        return Button
+    end
+
+    -- Buttons
+    local AutoClickBtn = createButton("Enable Auto Click", UDim2.new(0.5, -100, 0.3, 0))
+    local AutoReconnectBtn = createButton("Enable Auto Reconnect", UDim2.new(0.5, -100, 0.7, 0))
+
+    -- Function to update button text & color
+    local function updateButtonState(button, state, onText, offText)
+        button.Text = state and offText or onText
+        button.BackgroundColor3 = state and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
+    end
+
+    updateButtonState(AutoClickBtn, getgenv().AutoClick, "Enable Auto Click", "Disable Auto Click")
+    updateButtonState(AutoReconnectBtn, getgenv().AutoReconnect, "Enable Auto Reconnect", "Disable Auto Reconnect")
+
+    --// Auto Click Function
+    local function autoClick()
+        while getgenv().AutoClick do
+            pcall(function()
+                ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Click"):FireServer()
+            end)
+            wait(0.1)
+        end
+    end
+
+    --// Auto Reconnect Function
+    local function autoReconnect()
+        if getgenv().AutoReconnect then
+            print("Auto Reconnect: Monitoring connectivity...")
+
+            game:GetService("GuiService").ErrorMessageChanged:Connect(function()
+                print("Error Detected: Attempting to rejoin...")
                 wait(5)
-                TeleportService:Teleport(game.PlaceId)
-            end
-        end)
+                game:GetService("TeleportService"):Teleport(game.PlaceId)
+            end)
 
-        while getgenv().AutoReconnect do
-            if not Players.LocalPlayer then
-                sendNotification("Lost Connection", "Attempting to rejoin...")
-                TeleportService:Teleport(game.PlaceId)
+            game:GetService("Players").LocalPlayer.OnTeleport:Connect(function(State)
+                if State == Enum.TeleportState.Failed then
+                    print("Teleport Failed: Retrying teleport...")
+                    wait(5)
+                    game:GetService("TeleportService"):Teleport(game.PlaceId)
+                end
+            end)
+
+            while getgenv().AutoReconnect do
+                if not game:GetService("Players").LocalPlayer then
+                    print("Lost Connection: Attempting to rejoin...")
+                    game:GetService("TeleportService"):Teleport(game.PlaceId)
+                end
+                wait(10)
             end
-            wait(10)
         end
     end
-end
 
---// Close Button
-CloseButton.MouseButton1Click:Connect(function()
-    ScreenGui:Destroy()
+    --// Auto Redeem Codes (Runs Once)
+    local function autoRedeem()
+        if not isfile(FolderName .. "/Redeemed.txt") then
+            pcall(function()
+                for _, code in ipairs(Players.LocalPlayer:WaitForChild("Codes"):GetChildren()) do
+                    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("UseCode"):FireServer(code.Name)
+                    wait(0.2)
+                end
+                writefile(FolderName .. "/Redeemed.txt", "true")
+            end)
+        end
+    end
+
+    --// Toggle Auto Click
+    AutoClickBtn.MouseButton1Click:Connect(function()
+        getgenv().AutoClick = not getgenv().AutoClick
+        saveState("AutoClick.txt", getgenv().AutoClick)
+        updateButtonState(AutoClickBtn, getgenv().AutoClick, "Enable Auto Click", "Disable Auto Click")
+        
+        if getgenv().AutoClick then
+            task.spawn(autoClick)
+        end
+    end)
+
+    --// Toggle Auto Reconnect
+    AutoReconnectBtn.MouseButton1Click:Connect(function()
+        getgenv().AutoReconnect = not getgenv().AutoReconnect
+        saveState("AutoReconnect.txt", getgenv().AutoReconnect)
+        updateButtonState(AutoReconnectBtn, getgenv().AutoReconnect, "Enable Auto Reconnect", "Disable Auto Reconnect")
+        
+        if getgenv().AutoReconnect then
+            task.spawn(autoReconnect)
+        end
+    end)
+
+    --// Run on startup
+    autoRedeem()
+    if getgenv().AutoClick then task.spawn(autoClick) end
+    if getgenv().AutoReconnect then task.spawn(autoReconnect) end
 end)
 
---// Load UI State
-AutoClickButton.Text = getgenv().AutoClick and "Disable Auto Click" or "Enable Auto Click"
-AutoClickButton.BackgroundColor3 = getgenv().AutoClick and Color3.fromRGB(150, 50, 50) or Color3.fromRGB(50, 150, 50)
-
-AutoReconnectButton.Text = getgenv().AutoReconnect and "Disable Auto Reconnect" or "Enable Auto Reconnect"
-AutoReconnectButton.BackgroundColor3 = getgenv().AutoReconnect and Color3.fromRGB(150, 50, 50) or Color3.fromRGB(50, 50, 150)
-
-print("GUI Loaded Successfully!")
-
+--// Movable GUI (PC & Mobile)
 local dragging = false
 local dragStart = nil
 local startPos = nil
