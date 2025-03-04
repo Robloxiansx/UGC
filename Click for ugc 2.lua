@@ -23,7 +23,7 @@ local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 
---// Ensure the settings folder exists
+--// Ensure settings folder exists
 local FolderName = "AlwiHub_Settings"
 if not isfolder(FolderName) then
     makefolder(FolderName)
@@ -72,7 +72,7 @@ Frame.Position = UDim2.new(0.5, -125, 0.5, -90)
 Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Frame.BorderSizePixel = 0
 Frame.Active = true
-Frame.Draggable = false -- We will use delta-based dragging instead
+Frame.Draggable = false -- Using delta-based dragging
 
 local UICorner = Instance.new("UICorner", Frame)
 UICorner.CornerRadius = UDim.new(0, 10)
@@ -116,7 +116,7 @@ AutoReconnectButton.TextSize = 16
 local dragging, dragInput, dragStart, startPos
 
 Title.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         dragStart = input.Position
         startPos = Frame.Position
@@ -124,7 +124,7 @@ Title.InputBegan:Connect(function(input)
 end)
 
 Title.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseMovement then
         dragInput = input
     end
 end)
@@ -137,7 +137,7 @@ UserInputService.InputChanged:Connect(function(input)
 end)
 
 Title.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = false
     end
 end)
@@ -151,27 +151,60 @@ local function updateButtons()
     AutoReconnectButton.BackgroundColor3 = getgenv().AutoReconnect and Color3.fromRGB(150, 50, 50) or Color3.fromRGB(50, 50, 150)
 end
 
+--// Auto Click Function
+local function autoClick()
+    while getgenv().AutoClick do
+        ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Click"):FireServer()
+        wait(0.1)
+    end
+end
+
+--// Auto Reconnect Function
+local function autoReconnect()
+    while getgenv().AutoReconnect do
+        if not Players.LocalPlayer then
+            sendNotification("Lost Connection", "Attempting to rejoin...")
+            TeleportService:Teleport(game.PlaceId)
+        end
+        wait(10)
+    end
+end
+
 --// Button Click Events
 AutoClickButton.MouseButton1Click:Connect(function()
     getgenv().AutoClick = not getgenv().AutoClick
     saveSettings()
     updateButtons()
+    
+    if getgenv().AutoClick then
+        task.spawn(autoClick)
+    end
 end)
 
 AutoReconnectButton.MouseButton1Click:Connect(function()
     getgenv().AutoReconnect = not getgenv().AutoReconnect
     saveSettings()
     updateButtons()
+
+    if getgenv().AutoReconnect then
+        task.spawn(autoReconnect)
+    end
 end)
 
 --// Close Button
 CloseButton.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
-    getgenv().AutoClick = false
-    getgenv().AutoReconnect = false
 end)
 
 --// Load previous settings & start features if enabled
 updateButtons()
 
-sendNotification("Script Loaded", "Robux Drainer will run in 2hours")
+if getgenv().AutoClick then
+    task.spawn(autoClick)
+end
+
+if getgenv().AutoReconnect then
+    task.spawn(autoReconnect)
+end
+
+sendNotification("Script Loaded", "Alwi Hub | Click For UGC 2 is Ready!")
