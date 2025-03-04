@@ -13,14 +13,38 @@ if game.PlaceId ~= supportedGameId then
 end
 
 --// Services
-local Players = cloneref(game:GetService("Players"))
-local StarterGui = cloneref(game:GetService("StarterGui"))
-local TeleportService = cloneref(game:GetService("TeleportService"))
-local GuiService = cloneref(game:GetService("GuiService"))
-local ReplicatedStorage = cloneref(game:GetService("ReplicatedStorage"))
-local UserInputService = cloneref(game:GetService("UserInputService"))
+local Players = game:GetService("Players")
+local StarterGui = game:GetService("StarterGui")
+local TeleportService = game:GetService("TeleportService")
+local GuiService = game:GetService("GuiService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
+
+--// Save & Load System
+local saveFile = "AlwiHub_Settings.json"
+
+local function saveSettings()
+    local settings = {
+        AutoClick = getgenv().AutoClick,
+        AutoReconnect = getgenv().AutoReconnect
+    }
+    writefile(saveFile, HttpService:JSONEncode(settings))
+end
+
+local function loadSettings()
+    if isfile(saveFile) then
+        local data = readfile(saveFile)
+        local success, settings = pcall(HttpService.JSONDecode, HttpService, data)
+        if success and type(settings) == "table" then
+            getgenv().AutoClick = settings.AutoClick or false
+            getgenv().AutoReconnect = settings.AutoReconnect or false
+        end
+    end
+end
+loadSettings()
 
 --// Function to send notifications
 local function sendNotification(title, message)
@@ -80,8 +104,13 @@ AutoReconnectButton.Font = Enum.Font.SourceSansBold
 AutoReconnectButton.TextSize = 16
 
 --// Toggle System
-getgenv().AutoClick = false
-getgenv().AutoReconnect = false
+local function updateButtons()
+    AutoClickButton.Text = getgenv().AutoClick and "Disable Auto Click" or "Enable Auto Click"
+    AutoClickButton.BackgroundColor3 = getgenv().AutoClick and Color3.fromRGB(150, 50, 50) or Color3.fromRGB(50, 150, 50)
+
+    AutoReconnectButton.Text = getgenv().AutoReconnect and "Disable Auto Reconnect" or "Enable Auto Reconnect"
+    AutoReconnectButton.BackgroundColor3 = getgenv().AutoReconnect and Color3.fromRGB(150, 50, 50) or Color3.fromRGB(50, 50, 150)
+end
 
 --// Auto Click Function
 local function autoClick()
@@ -96,14 +125,12 @@ local function autoReconnect()
     if getgenv().AutoReconnect then
         sendNotification("Auto Reconnect", "Monitoring connectivity...")
         
-        -- Detect error messages and attempt to rejoin
         GuiService.ErrorMessageChanged:Connect(function()
             sendNotification("Error Detected", "Attempting to rejoin...")
             wait(5)
             TeleportService:Teleport(game.PlaceId)
         end)
 
-        -- Detect failed teleports and retry
         LocalPlayer.OnTeleport:Connect(function(State)
             if State == Enum.TeleportState.Failed then
                 sendNotification("Teleport Failed", "Retrying teleport...")
@@ -112,7 +139,6 @@ local function autoReconnect()
             end
         end)
 
-        -- Continuous monitoring for disconnections
         while getgenv().AutoReconnect do
             if not Players.LocalPlayer then
                 sendNotification("Lost Connection", "Attempting to rejoin...")
@@ -126,8 +152,8 @@ end
 --// Button Click Events
 AutoClickButton.MouseButton1Click:Connect(function()
     getgenv().AutoClick = not getgenv().AutoClick
-    AutoClickButton.Text = getgenv().AutoClick and "Disable Auto Click" or "Enable Auto Click"
-    AutoClickButton.BackgroundColor3 = getgenv().AutoClick and Color3.fromRGB(150, 50, 50) or Color3.fromRGB(50, 150, 50)
+    saveSettings()
+    updateButtons()
     
     if getgenv().AutoClick then
         task.spawn(autoClick)
@@ -136,8 +162,8 @@ end)
 
 AutoReconnectButton.MouseButton1Click:Connect(function()
     getgenv().AutoReconnect = not getgenv().AutoReconnect
-    AutoReconnectButton.Text = getgenv().AutoReconnect and "Disable Auto Reconnect" or "Enable Auto Reconnect"
-    AutoReconnectButton.BackgroundColor3 = getgenv().AutoReconnect and Color3.fromRGB(150, 50, 50) or Color3.fromRGB(50, 50, 150)
+    saveSettings()
+    updateButtons()
 
     if getgenv().AutoReconnect then
         task.spawn(autoReconnect)
@@ -149,49 +175,18 @@ CloseButton.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
     getgenv().AutoClick = false
     getgenv().AutoReconnect = false
+    saveSettings()
 end)
 
---// Movable GUI (PC & Mobile)
-local dragging, dragInput, dragStart, startPos
+--// Load previous settings & start features if enabled
+updateButtons()
 
-local function update(input)
-    local delta = input.Position - dragStart
-    Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+if getgenv().AutoClick then
+    task.spawn(autoClick)
 end
 
-Frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = Frame.Position
-
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
-    end
-end)
-
-Frame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        update(input)
-    end
-end)
-
---// Auto Redeem Codes (Runs Once)
-local function redeemCodes()
-    for _, code in ipairs(LocalPlayer:WaitForChild("Codes"):GetChildren()) do
-        ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("UseCode"):FireServer(code.Name)
-        wait(0.2)
-    end
+if getgenv().AutoReconnect then
+    task.spawn(autoReconnect)
 end
-redeemCodes()
 
-print("GUI Loaded Successfully!")
+sendNotification("Script Loaded", "Alwi Hub | Click For UGC 2 is Ready!")
