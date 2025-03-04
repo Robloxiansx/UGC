@@ -183,12 +183,14 @@ pcall(function()
 end)
 
 --// Movable GUI (PC & Mobile)
+
+--// Movable GUI (PC & Mobile)
 local dragging = false
 local dragStart = nil
 local startPos = nil
 
 local function update(input)
-    if dragging then
+    if dragging and input and input.Position then
         local delta = input.Position - dragStart
         Frame.Position = UDim2.new(
             startPos.X.Scale, startPos.X.Offset + delta.X,
@@ -207,15 +209,18 @@ end)
 
 Frame.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then
-                dragging = false
-            end
-        end)
+        update(input)
     end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
+Frame.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
+-- Fix reference to UserInputService
+UIS.InputChanged:Connect(function(input)
     if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
         update(input)
     end
