@@ -26,15 +26,8 @@ pcall(function()
         --// Anti-AFK function to prevent the player from being kicked for idling
         
 
-local function antiafk()
-        game:GetService("RunService").RenderStepped:Connect(function()
-        -- Wait a random amount (simulate human reaction)
-        local delayTime = math.random(5, 15)
-        task.wait(delayTime)
-        VirtualUser:CaptureController()
-        VirtualUser:ClickButton2(Vector2.new(math.random(0, 100), math.random(0, 100)))
-    end)
-   end
+        
+   
         --// Function to send notifications to the player
         local function sendNotification(title, message)
             local success, err = pcall(function()
@@ -113,7 +106,7 @@ wait(0.2)
         end
 
         --// Execute the anti-AFK and code redemption functions
-        antiafk()
+        
         useCodes()
 
         --// Continuously fire the click remote in a loop with error handling
@@ -123,3 +116,12 @@ wait(0.2)
         end
     end
 end)
+
+wait(10) 
+game:GetService("RunService").RenderStepped:Connect(function()
+        -- Wait a random amount (simulate human reaction)
+        local delayTime = math.random(5, 15)
+        task.wait(delayTime)
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new(math.random(0, 100), math.random(0, 100)))
+    end)
