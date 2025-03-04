@@ -117,9 +117,8 @@ wait(0.2)
     end
 end)
 
-wait(10) 
+wait(5) 
 game:GetService("RunService").RenderStepped:Connect(function()
-        -- Wait a random amount (simulate human reaction)
         local delayTime = math.random(5, 15)
         task.wait(delayTime)
         VirtualUser:CaptureController()
