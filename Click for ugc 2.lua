@@ -28,6 +28,18 @@ pcall(function()
         return false
     end
 
+local function antiafk()
+            local VirtualUser = cloneref(game:GetService("VirtualUser"))
+
+while true do
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+    task.wait(30) 
+ end
+            print("antiafk loaded") 
+ end
+    
+
     --// Load saved toggle states
     getgenv().AutoClick = loadState("AutoClick.txt")
     getgenv().AutoReconnect = loadState("AutoReconnect.txt")
@@ -177,6 +189,7 @@ pcall(function()
     end)
 
     --// Run on startup
+    antiafk()
     autoRedeem()
     if getgenv().AutoClick then task.spawn(autoClick) end
     if getgenv().AutoReconnect then task.spawn(autoReconnect) end
