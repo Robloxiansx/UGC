@@ -1,240 +1,257 @@
 pcall(function()
-    if not game:IsLoaded() then
-        game.Loaded:Wait()
-    end
-
-    --// Services
-    local Players = cloneref(game:GetService("Players"))
-    local StarterGui = cloneref(game:GetService("StarterGui"))
-    local TeleportService = cloneref(game:GetService("TeleportService"))
-    local ReplicatedStorage = cloneref(game:GetService("ReplicatedStorage"))
-    local UIS = cloneref(game:GetService("UserInputService"))
-    local TweenService = cloneref(game:GetService("TweenService"))
-
-    --// File system for saving toggle state
-    local FolderName = "AlwiHub_Settings"
-    if not isfolder(FolderName) then
-        makefolder(FolderName)
-    end
-
-    local function saveState(fileName, state)
-        writefile(FolderName .. "/" .. fileName, tostring(state))
-    end
-
-    local function loadState(fileName)
-        if isfile(FolderName .. "/" .. fileName) then
-            return readfile(FolderName .. "/" .. fileName) == "true"
+    --// Check if the current game place is the one we want to run the script in
+    if game.PlaceId == 90070078747190 then
+        --// Wait for the game to finish loading, if it hasn't already
+        if not game:IsLoaded() then
+            game.Loaded:Wait()
         end
-        return false
-    end
 
-local function antiafk()
-            local VirtualUser = cloneref(game:GetService("VirtualUser"))
+        --// Define cloneref and newcclosure for extra security, if not already defined
+        local cloneref = cloneref or function(obj) return obj end
+        local newcclosure = newcclosure or function(func) return func end
 
-while true do
-    VirtualUser:CaptureController()
-    VirtualUser:ClickButton2(Vector2.new())
-    task.wait(30) 
- end
-            print("antiafk loaded") 
- end
-    
-
-    --// Load saved toggle states
-    getgenv().AutoClick = loadState("AutoClick.txt")
-    getgenv().AutoReconnect = loadState("AutoReconnect.txt")
-
-    --// Create GUI
-    local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-
-    local Frame = Instance.new("Frame", ScreenGui)
-    Frame.Size = UDim2.new(0, 240, 0, 150)
-    Frame.Position = UDim2.new(0.5, -120, 0.4, -75)
-    Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    Frame.BorderSizePixel = 0
-    Frame.Active = true
-    Frame.Draggable = true
-
-    local UICorner = Instance.new("UICorner", Frame)
-    UICorner.CornerRadius = UDim.new(0, 10)
-
-    --// Title Label
-    local Title = Instance.new("TextLabel", Frame)
-    Title.Size = UDim2.new(1, 0, 0, 30)
-    Title.Position = UDim2.new(0, 0, 0, 0)
-    Title.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    Title.Text = "Alwi Hub | Click For UGC 2"
-    Title.TextSize = 16
-    Title.Font = Enum.Font.SourceSansBold
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-
-    local UICornerTitle = Instance.new("UICorner", Title)
-    UICornerTitle.CornerRadius = UDim.new(0, 10)
-
-    local function createButton(text, position)
-        local Button = Instance.new("TextButton", Frame)
-        Button.Size = UDim2.new(0, 200, 0, 40)
-        Button.Position = position
-        Button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        Button.Text = text
-        Button.TextSize = 18
-        Button.Font = Enum.Font.SourceSansBold
-        Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-
-        local UICornerBtn = Instance.new("UICorner", Button)
-        UICornerBtn.CornerRadius = UDim.new(0, 10)
-
-        -- Smooth Button Effects
-        Button.MouseEnter:Connect(function()
-            TweenService:Create(Button, TweenInfo.new(0.2), {BackgroundTransparency = 0.2}):Play()
-        end)
-        Button.MouseLeave:Connect(function()
-            TweenService:Create(Button, TweenInfo.new(0.2), {BackgroundTransparency = 0}):Play()
-        end)
-        Button.MouseButton1Down:Connect(function()
-            TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 190, 0, 35)}):Play()
-        end)
-        Button.MouseButton1Up:Connect(function()
-            TweenService:Create(Button, TweenInfo.new(0.1), {Size = UDim2.new(0, 200, 0, 40)}):Play()
-        end)
-
-        return Button
-    end
-
-    -- Buttons
-    local AutoClickBtn = createButton("Enable Auto Click", UDim2.new(0.5, -100, 0.3, 0))
-    local AutoReconnectBtn = createButton("Enable Auto Reconnect", UDim2.new(0.5, -100, 0.7, 0))
-
-    -- Function to update button text & color
-    local function updateButtonState(button, state, onText, offText)
-        button.Text = state and offText or onText
-        button.BackgroundColor3 = state and Color3.fromRGB(255, 0, 0) or Color3.fromRGB(0, 255, 0)
-    end
-
-    updateButtonState(AutoClickBtn, getgenv().AutoClick, "Enable Auto Click", "Disable Auto Click")
-    updateButtonState(AutoReconnectBtn, getgenv().AutoReconnect, "Enable Auto Reconnect", "Disable Auto Reconnect")
-
-    --// Auto Click Function
-    local function autoClick()
-        while getgenv().AutoClick do
-            pcall(function()
-                ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Click"):FireServer()
-            end)
-            wait(0.1)
+        --// A helper function to securely get services using cloneref
+        local function secureGetService(serviceName)
+            return cloneref(game:GetService(serviceName))
         end
-    end
 
-    --// Auto Reconnect Function
-    local function autoReconnect()
-        if getgenv().AutoReconnect then
-            print("Auto Reconnect: Monitoring connectivity...")
+        --// Securely obtain references to important Roblox services
+        local VirtualUser = secureGetService("VirtualUser")         --// For simulating user input
+        local Players = secureGetService("Players")                 --// To access player data
+        local StarterGui = secureGetService("StarterGui")           --// For sending notifications
+        local TeleportService = secureGetService("TeleportService")   --// For teleporting players
+        local GuiService = secureGetService("GuiService")             --// To monitor GUI errors
+        local ReplicatedStorage = secureGetService("ReplicatedStorage") --// For accessing shared objects
 
-            game:GetService("GuiService").ErrorMessageChanged:Connect(function()
-                print("Error Detected: Attempting to rejoin...")
-                wait(5)
-                game:GetService("TeleportService"):Teleport(game.PlaceId)
-            end)
-
-            game:GetService("Players").LocalPlayer.OnTeleport:Connect(function(State)
-                if State == Enum.TeleportState.Failed then
-                    print("Teleport Failed: Retrying teleport...")
-                    wait(5)
-                    game:GetService("TeleportService"):Teleport(game.PlaceId)
-                end
-            end)
-
-            while getgenv().AutoReconnect do
-                if not game:GetService("Players").LocalPlayer then
-                    print("Lost Connection: Attempting to rejoin...")
-                    game:GetService("TeleportService"):Teleport(game.PlaceId)
-                end
-                wait(10)
-            end
-        end
-    end
-
-    --// Auto Redeem Codes (Runs Once)
-    local function autoRedeem()
-        if not isfile(FolderName .. "/Redeemed.txt") then
-            pcall(function()
-                for _, code in ipairs(Players.LocalPlayer:WaitForChild("Codes"):GetChildren()) do
-                    ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("UseCode"):FireServer(code.Name)
-                    wait(0.2)
-                end
-                writefile(FolderName .. "/Redeemed.txt", "true")
-            end)
-        end
-    end
-
-    --// Toggle Auto Click
-    AutoClickBtn.MouseButton1Click:Connect(function()
-        getgenv().AutoClick = not getgenv().AutoClick
-        saveState("AutoClick.txt", getgenv().AutoClick)
-        updateButtonState(AutoClickBtn, getgenv().AutoClick, "Enable Auto Click", "Disable Auto Click")
-        
-        if getgenv().AutoClick then
-            task.spawn(autoClick)
-        end
+        --// Anti-AFK function to prevent the player from being kicked for idling
+        local function antiafk()
+            Players.LocalPlayer.Idled:Connect(function()
+        -- Wait a random amount (simulate human reaction)
+        local delayTime = math.random(5, 15)
+        task.wait(delayTime)
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new(math.random(0, 100), math.random(0, 100)))
+        print("Anti-AFK triggered after " .. delayTime .. " seconds of idle.")
     end)
-
-    --// Toggle Auto Reconnect
-    AutoReconnectBtn.MouseButton1Click:Connect(function()
-        getgenv().AutoReconnect = not getgenv().AutoReconnect
-        saveState("AutoReconnect.txt", getgenv().AutoReconnect)
-        updateButtonState(AutoReconnectBtn, getgenv().AutoReconnect, "Enable Auto Reconnect", "Disable Auto Reconnect")
-        
-        if getgenv().AutoReconnect then
-            task.spawn(autoReconnect)
-        end
-    end)
-
-    --// Run on startup
-    antiafk()
-    autoRedeem()
-    if getgenv().AutoClick then task.spawn(autoClick) end
-    if getgenv().AutoReconnect then task.spawn(autoReconnect) end
-end)
-
---// Movable GUI (PC & Mobile)
-
---// Movable GUI (PC & Mobile)
-local dragging = false
-local dragStart = nil
-local startPos = nil
-
-local function update(input)
-    if dragging and input and input.Position then
-        local delta = input.Position - dragStart
-        Frame.Position = UDim2.new(
-            startPos.X.Scale, startPos.X.Offset + delta.X,
-            startPos.Y.Scale, startPos.Y.Offset + delta.Y
-        )
-    end
 end
 
-Frame.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = Frame.Position
-    end
-end)
+warn("Anti Idle is enabled")
 
-Frame.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        update(input)
-    end
-end)
+        end
 
-Frame.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = false
-    end
-end)
+        --// Function to send notifications to the player
+        local function sendNotification(title, message)
+            local success, err = pcall(function()
+                StarterGui:SetCore("SendNotification", {
+                    Title = title,             --// Title of the notification
+                    Text = message,            --// Message body of the notification
+                    Icon = "http://www.roblox.com/asset/?id=92639750101948", --// Notification icon
+                    Duration = 5,              --// Duration (in seconds) the notification will appear
+                })
+            end)
+            if not success then warn("Notification Error:", err) end
+        end
 
--- Fix reference to UserInputService
-UIS.InputChanged:Connect(function(input)
-    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-        update(input)
+        --// Notify that the script has loaded
+        sendNotification("Script Loaded", "Auto Rejoin Script is running!")
+
+        --// Listen for error messages from the GUI service and attempt a rejoin on error
+        GuiService.ErrorMessageChanged:Connect(function()
+            local success, err = pcall(function()
+                sendNotification("Error Detected", "Attempting to rejoin...")
+                wait(5)
+                TeleportService:Teleport(game.PlaceId)
+            end)
+            if not success then warn("Error Handling Failed:", err) end
+        end)
+
+        --// Listen for teleport events; if teleport fails, try again
+        Players.LocalPlayer.OnTeleport:Connect(function(State)
+            local success, err = pcall(function()
+                if State == Enum.TeleportState.Failed then
+                    sendNotification("Teleport Failed", "Retrying teleport...")
+                    wait(5)
+                    TeleportService:Teleport(game.PlaceId)
+                end
+            end)
+            if not success then warn("Teleport Handling Error:", err) end
+        end)
+
+        --// Function to automatically check connectivity and rejoin if the player loses connection
+        local function autoRejoin()
+            local success, err = pcall(function()
+                sendNotification("Connectivity Check", "Monitoring connectivity...")
+                while true do
+                    --// If the LocalPlayer no longer exists, attempt to teleport back
+                    if not Players.LocalPlayer then
+                        sendNotification("Lost Connection", "Attempting to rejoin...")
+                        TeleportService:Teleport(game.PlaceId)
+                    end
+                    wait(10)
+                end
+            end)
+            if not success then warn("AutoRejoin Error:", err) end
+        end
+
+        --// Start the autoRejoin function in a separate thread
+        task.spawn(autoRejoin)
+
+        --// Function to fire the "Click" remote event on the server
+        local function fireClickRemote()
+            local success, err = pcall(function()
+                ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Click"):FireServer()
+            end)
+            if not success then warn("Click Remote Error:", err) end
+        end
+
+        --// Function to use all available codes by firing the "UseCode" remote event for each code
+        local function useCodes()
+            local success, err = pcall(function()
+                for _, code in ipairs(game:GetSpcall(function()
+    --// Check if the current game place is the one we want to run the script in
+    if game.PlaceId == 90070078747190 then
+        --// Wait for the game to finish loading, if it hasn't already
+        if not game:IsLoaded() then
+            game.Loaded:Wait()
+        end
+
+        --// Define cloneref and newcclosure for extra security, if not already defined
+        local cloneref = cloneref or function(obj) return obj end
+        local newcclosure = newcclosure or function(func) return func end
+
+        --// A helper function to securely get services using cloneref
+        local function secureGetService(serviceName)
+            return cloneref(game:GetService(serviceName))
+        end
+
+        --// Securely obtain references to important Roblox services
+        local VirtualUser = secureGetService("VirtualUser")         --// For simulating user input
+        local Players = secureGetService("Players")                 --// To access player data
+        local StarterGui = secureGetService("StarterGui")           --// For sending notifications
+        local TeleportService = secureGetService("TeleportService")   --// For teleporting players
+        local GuiService = secureGetService("GuiService")             --// To monitor GUI errors
+        local ReplicatedStorage = secureGetService("ReplicatedStorage") --// For accessing shared objects
+
+        --// Anti-AFK function to prevent the player from being kicked for idling
+        local function antiafk()
+            Players.LocalPlayer.Idled:Connect(function()
+        -- Wait a random amount (simulate human reaction)
+        local delayTime = math.random(5, 15)
+        task.wait(delayTime)
+        VirtualUser:CaptureController()
+        VirtualUser:ClickButton2(Vector2.new(math.random(0, 100), math.random(0, 100)))
+        print("Anti-AFK triggered after " .. delayTime .. " seconds of idle.")
+    end)
+end
+
+warn("Anti Idle is enabled")
+
+        end
+
+        --// Function to send notifications to the player
+        local function sendNotification(title, message)
+            local success, err = pcall(function()
+                StarterGui:SetCore("SendNotification", {
+                    Title = title,             --// Title of the notification
+                    Text = message,            --// Message body of the notification
+                    Icon = "http://www.roblox.com/asset/?id=92639750101948", --// Notification icon
+                    Duration = 5,              --// Duration (in seconds) the notification will appear
+                })
+            end)
+            if not success then warn("Notification Error:", err) end
+        end
+
+        --// Notify that the script has loaded
+        sendNotification("Script Loaded", "Auto Rejoin Script is running!")
+
+        --// Listen for error messages from the GUI service and attempt a rejoin on error
+        GuiService.ErrorMessageChanged:Connect(function()
+            local success, err = pcall(function()
+                sendNotification("Error Detected", "Attempting to rejoin...")
+                wait(5)
+                TeleportService:Teleport(game.PlaceId)
+            end)
+            if not success then warn("Error Handling Failed:", err) end
+        end)
+
+        --// Listen for teleport events; if teleport fails, try again
+        Players.LocalPlayer.OnTeleport:Connect(function(State)
+            local success, err = pcall(function()
+                if State == Enum.TeleportState.Failed then
+                    sendNotification("Teleport Failed", "Retrying teleport...")
+                    wait(5)
+                    TeleportService:Teleport(game.PlaceId)
+                end
+            end)
+            if not success then warn("Teleport Handling Error:", err) end
+        end)
+
+        --// Function to automatically check connectivity and rejoin if the player loses connection
+        local function autoRejoin()
+            local success, err = pcall(function()
+                sendNotification("Connectivity Check", "Monitoring connectivity...")
+                while true do
+                    --// If the LocalPlayer no longer exists, attempt to teleport back
+                    if not Players.LocalPlayer then
+                        sendNotification("Lost Connection", "Attempting to rejoin...")
+                        TeleportService:Teleport(game.PlaceId)
+                    end
+                    wait(10)
+                end
+            end)
+            if not success then warn("AutoRejoin Error:", err) end
+        end
+
+        --// Start the autoRejoin function in a separate thread
+        task.spawn(autoRejoin)
+
+        --// Function to fire the "Click" remote event on the server
+        local function fireClickRemote()
+            local success, err = pcall(function()
+                ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Click"):FireServer()
+            end)
+            if not success then warn("Click Remote Error:", err) end
+        end
+
+        --// Function to use all available codes by firing the "UseCode" remote event for each code
+        local function useCodes()
+            local success, err = pcall(function()
+                for _, code in ipairs(game:GetService("Players").LocalPlayer:WaitForChild("Codes"):GetChildren()) do
+        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("UseCode"):FireServer(code.Name)
+wait(0.2) 
+    end
+                print("Redeem All Code Auto Update Loaded!")
+            end)
+            if not success then warn("Code Redemption Error:", err) end
+        end
+
+        --// Execute the anti-AFK and code redemption functions
+        antiafk()
+        useCodes()
+
+        --// Continuously fire the click remote in a loop with error handling
+        while wait() do
+            local success, err = pcall(fireClickRemote)
+            if not success then warn("Loop Error:", err) end
+        end
+    end
+end)ervice("Players").LocalPlayer:WaitForChild("Codes"):GetChildren()) do
+        game:GetService("ReplicatedStorage"):WaitForChild("Remotes"):WaitForChild("UseCode"):FireServer(code.Name)
+wait(0.2) 
+    end
+                print("Redeem All Code Auto Update Loaded!")
+            end)
+            if not success then warn("Code Redemption Error:", err) end
+        end
+
+        --// Execute the anti-AFK and code redemption functions
+        antiafk()
+        useCodes()
+
+        --// Continuously fire the click remote in a loop with error handling
+        while wait() do
+            local success, err = pcall(fireClickRemote)
+            if not success then warn("Loop Error:", err) end
+        end
     end
 end)
