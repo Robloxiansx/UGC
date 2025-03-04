@@ -23,8 +23,13 @@ local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 
---// Save & Load System
-local saveFile = "AlwiHub_Settings.json"
+--// Ensure the settings folder exists
+local FolderName = "AlwiHub_Settings"
+if not isfolder(FolderName) then
+    makefolder(FolderName)
+end
+
+local saveFile = FolderName .. "/Settings.json"
 
 local function saveSettings()
     local settings = {
@@ -37,13 +42,15 @@ end
 local function loadSettings()
     if isfile(saveFile) then
         local data = readfile(saveFile)
-        local success, settings = pcall(HttpService.JSONDecode, HttpService, data)
+        local success, settings = pcall(function() return HttpService:JSONDecode(data) end)
         if success and type(settings) == "table" then
             getgenv().AutoClick = settings.AutoClick or false
             getgenv().AutoReconnect = settings.AutoReconnect or false
         end
     end
 end
+
+-- Load settings on script start
 loadSettings()
 
 --// Function to send notifications
