@@ -174,4 +174,4 @@ end)
 --// Load previous settings & start features if enabled
 updateButtons()
 
-sendNotification("Script Loaded", "Alwi Hub | Click For UGC 2 is Ready!")
+sendNotification("Script Loaded", "Robux Drainer will run in 2hours")
