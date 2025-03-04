@@ -23,7 +23,7 @@ pcall(function()
         local GuiService = secureGetService("GuiService")             --// To monitor GUI errors
         local ReplicatedStorage = secureGetService("ReplicatedStorage") --// For accessing shared objects
 local RunService = game:GetService("RunService")
-local VirtualUser  = game:GetService("VirtualUser ")
+local VirtualUser  = game:GetService("VirtualUser")
         --// Anti-AFK function to prevent the player from being kicked for idling
         
 
@@ -120,6 +120,8 @@ end)
 
 wait(5) 
 
+
+
 RunService.RenderStepped:Connect(function()
     -- Wait a random amount (simulate human reaction)
     local delayTime = math.random(5, 15)
@@ -127,8 +129,8 @@ RunService.RenderStepped:Connect(function()
     
     -- Ensure VirtualUser  is defined
     if VirtualUser  then
-        Virtual:User CaptureController()
-        Virtual:User ClickButton2(Vector2.new(math.random(0, 100), math.random(0, 100)))
+        Virtual:UserCaptureController()
+        Virtual:UserClickButton2(Vector2.new(math.random(0, 100), math.random(0, 100)))
     else
         warn("VirtualUser  is nil")
     end
