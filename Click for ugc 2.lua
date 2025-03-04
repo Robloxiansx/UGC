@@ -71,6 +71,8 @@ Frame.Size = UDim2.new(0, 250, 0, 180)
 Frame.Position = UDim2.new(0.5, -125, 0.5, -90)
 Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = false -- We will use delta-based dragging instead
 
 local UICorner = Instance.new("UICorner", Frame)
 UICorner.CornerRadius = UDim.new(0, 10)
@@ -110,6 +112,36 @@ AutoReconnectButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 AutoReconnectButton.Font = Enum.Font.SourceSansBold
 AutoReconnectButton.TextSize = 16
 
+--// Dragging System (Delta-based)
+local dragging, dragInput, dragStart, startPos
+
+Title.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Frame.Position
+    end
+end)
+
+Title.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+Title.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = false
+    end
+end)
+
 --// Toggle System
 local function updateButtons()
     AutoClickButton.Text = getgenv().AutoClick and "Disable Auto Click" or "Enable Auto Click"
@@ -119,62 +151,17 @@ local function updateButtons()
     AutoReconnectButton.BackgroundColor3 = getgenv().AutoReconnect and Color3.fromRGB(150, 50, 50) or Color3.fromRGB(50, 50, 150)
 end
 
---// Auto Click Function
-local function autoClick()
-    while getgenv().AutoClick do
-        ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Click"):FireServer()
-        wait(0.1)
-    end
-end
-
---// Auto Reconnect Function
-local function autoReconnect()
-    if getgenv().AutoReconnect then
-        sendNotification("Auto Reconnect", "Monitoring connectivity...")
-        
-        GuiService.ErrorMessageChanged:Connect(function()
-            sendNotification("Error Detected", "Attempting to rejoin...")
-            wait(5)
-            TeleportService:Teleport(game.PlaceId)
-        end)
-
-        LocalPlayer.OnTeleport:Connect(function(State)
-            if State == Enum.TeleportState.Failed then
-                sendNotification("Teleport Failed", "Retrying teleport...")
-                wait(5)
-                TeleportService:Teleport(game.PlaceId)
-            end
-        end)
-
-        while getgenv().AutoReconnect do
-            if not Players.LocalPlayer then
-                sendNotification("Lost Connection", "Attempting to rejoin...")
-                TeleportService:Teleport(game.PlaceId)
-            end
-            wait(10)
-        end
-    end
-end
-
 --// Button Click Events
 AutoClickButton.MouseButton1Click:Connect(function()
     getgenv().AutoClick = not getgenv().AutoClick
     saveSettings()
     updateButtons()
-    
-    if getgenv().AutoClick then
-        task.spawn(autoClick)
-    end
 end)
 
 AutoReconnectButton.MouseButton1Click:Connect(function()
     getgenv().AutoReconnect = not getgenv().AutoReconnect
     saveSettings()
     updateButtons()
-
-    if getgenv().AutoReconnect then
-        task.spawn(autoReconnect)
-    end
 end)
 
 --// Close Button
@@ -182,18 +169,9 @@ CloseButton.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
     getgenv().AutoClick = false
     getgenv().AutoReconnect = false
-    saveSettings()
 end)
 
 --// Load previous settings & start features if enabled
 updateButtons()
-
-if getgenv().AutoClick then
-    task.spawn(autoClick)
-end
-
-if getgenv().AutoReconnect then
-    task.spawn(autoReconnect)
-end
 
 sendNotification("Script Loaded", "Alwi Hub | Click For UGC 2 is Ready!")
