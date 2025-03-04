@@ -1,6 +1,6 @@
 if _G.Honey_Valley then return end
 _G.Honey_Valley = true
-
+--// Game Check
 local supportedGameId = 90070078747190
 
 if game.PlaceId ~= supportedGameId then
@@ -13,17 +13,17 @@ if game.PlaceId ~= supportedGameId then
 end
 
 --// Services
-local Players = game:GetService("Players")
-local StarterGui = game:GetService("StarterGui")
-local TeleportService = game:GetService("TeleportService")
-local GuiService = game:GetService("GuiService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local UserInputService = game:GetService("UserInputService")
-local HttpService = game:GetService("HttpService")
+local Players = cloneref(game:GetService("Players"))
+local StarterGui = cloneref(game:GetService("StarterGui"))
+local TeleportService = cloneref(game:GetService("TeleportService"))
+local GuiService = cloneref(game:GetService("GuiService"))
+local ReplicatedStorage = cloneref(game:GetService("ReplicatedStorage"))
+local UserInputService = cloneref(game:GetService("UserInputService"))
+local HttpService = cloneref(game:GetService("HttpService"))
 
 local LocalPlayer = Players.LocalPlayer
 
---// Ensure settings folder exists
+--// Settings Folder & File
 local FolderName = "AlwiHub_Settings"
 if not isfolder(FolderName) then
     makefolder(FolderName)
@@ -50,7 +50,7 @@ local function loadSettings()
     end
 end
 
--- Load settings on script start
+--// Load settings on script start
 loadSettings()
 
 --// Function to send notifications
@@ -71,8 +71,6 @@ Frame.Size = UDim2.new(0, 250, 0, 180)
 Frame.Position = UDim2.new(0.5, -125, 0.5, -90)
 Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 Frame.BorderSizePixel = 0
-Frame.Active = true
-Frame.Draggable = false -- Using delta-based dragging
 
 local UICorner = Instance.new("UICorner", Frame)
 UICorner.CornerRadius = UDim.new(0, 10)
@@ -112,44 +110,28 @@ AutoReconnectButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 AutoReconnectButton.Font = Enum.Font.SourceSansBold
 AutoReconnectButton.TextSize = 16
 
---// Dragging System (Delta-based)
-local dragging, dragInput, dragStart, startPos
-
-Title.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = true
-        dragStart = input.Position
-        startPos = Frame.Position
-    end
-end)
-
-Title.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if input == dragInput and dragging then
-        local delta = input.Position - dragStart
-        Frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
-Title.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragging = false
-    end
-end)
-
 --// Toggle System
-local function updateButtons()
+AutoClickButton.MouseButton1Click:Connect(function()
+    getgenv().AutoClick = not getgenv().AutoClick
     AutoClickButton.Text = getgenv().AutoClick and "Disable Auto Click" or "Enable Auto Click"
     AutoClickButton.BackgroundColor3 = getgenv().AutoClick and Color3.fromRGB(150, 50, 50) or Color3.fromRGB(50, 150, 50)
+    saveSettings()
+    
+    if getgenv().AutoClick then
+        task.spawn(autoClick)
+    end
+end)
 
+AutoReconnectButton.MouseButton1Click:Connect(function()
+    getgenv().AutoReconnect = not getgenv().AutoReconnect
     AutoReconnectButton.Text = getgenv().AutoReconnect and "Disable Auto Reconnect" or "Enable Auto Reconnect"
     AutoReconnectButton.BackgroundColor3 = getgenv().AutoReconnect and Color3.fromRGB(150, 50, 50) or Color3.fromRGB(50, 50, 150)
-end
+    saveSettings()
+
+    if getgenv().AutoReconnect then
+        task.spawn(autoReconnect)
+    end
+end)
 
 --// Auto Click Function
 local function autoClick()
@@ -161,50 +143,81 @@ end
 
 --// Auto Reconnect Function
 local function autoReconnect()
-    while getgenv().AutoReconnect do
-        if not Players.LocalPlayer then
-            sendNotification("Lost Connection", "Attempting to rejoin...")
+    if getgenv().AutoReconnect then
+        sendNotification("Auto Reconnect", "Monitoring connectivity...")
+
+        GuiService.ErrorMessageChanged:Connect(function()
+            sendNotification("Error Detected", "Attempting to rejoin...")
+            wait(5)
             TeleportService:Teleport(game.PlaceId)
+        end)
+
+        LocalPlayer.OnTeleport:Connect(function(State)
+            if State == Enum.TeleportState.Failed then
+                sendNotification("Teleport Failed", "Retrying teleport...")
+                wait(5)
+                TeleportService:Teleport(game.PlaceId)
+            end
+        end)
+
+        while getgenv().AutoReconnect do
+            if not Players.LocalPlayer then
+                sendNotification("Lost Connection", "Attempting to rejoin...")
+                TeleportService:Teleport(game.PlaceId)
+            end
+            wait(10)
         end
-        wait(10)
     end
 end
-
---// Button Click Events
-AutoClickButton.MouseButton1Click:Connect(function()
-    getgenv().AutoClick = not getgenv().AutoClick
-    saveSettings()
-    updateButtons()
-    
-    if getgenv().AutoClick then
-        task.spawn(autoClick)
-    end
-end)
-
-AutoReconnectButton.MouseButton1Click:Connect(function()
-    getgenv().AutoReconnect = not getgenv().AutoReconnect
-    saveSettings()
-    updateButtons()
-
-    if getgenv().AutoReconnect then
-        task.spawn(autoReconnect)
-    end
-end)
 
 --// Close Button
 CloseButton.MouseButton1Click:Connect(function()
     ScreenGui:Destroy()
 end)
 
---// Load previous settings & start features if enabled
-updateButtons()
+--// Load UI State
+AutoClickButton.Text = getgenv().AutoClick and "Disable Auto Click" or "Enable Auto Click"
+AutoClickButton.BackgroundColor3 = getgenv().AutoClick and Color3.fromRGB(150, 50, 50) or Color3.fromRGB(50, 150, 50)
 
-if getgenv().AutoClick then
-    task.spawn(autoClick)
+AutoReconnectButton.Text = getgenv().AutoReconnect and "Disable Auto Reconnect" or "Enable Auto Reconnect"
+AutoReconnectButton.BackgroundColor3 = getgenv().AutoReconnect and Color3.fromRGB(150, 50, 50) or Color3.fromRGB(50, 50, 150)
+
+print("GUI Loaded Successfully!")
+
+local dragging = false
+local dragStart = nil
+local startPos = nil
+
+local function update(input)
+    if dragging then
+        local delta = input.Position - dragStart
+        Frame.Position = UDim2.new(
+            startPos.X.Scale, startPos.X.Offset + delta.X,
+            startPos.Y.Scale, startPos.Y.Offset + delta.Y
+        )
+    end
 end
 
-if getgenv().AutoReconnect then
-    task.spawn(autoReconnect)
-end
+Frame.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Frame.Position
+    end
+end)
 
-sendNotification("Script Loaded", "Alwi Hub | Click For UGC 2 is Ready!")
+Frame.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        input.Changed:Connect(function()
+            if input.UserInputState == Enum.UserInputState.End then
+                dragging = false
+            end
+        end)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        update(input)
+    end
+end)
